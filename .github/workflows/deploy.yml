@@ -1,0 +1,38 @@
+# private 저장소 wedding-src 를 받아 build.sh 로 빌드하고 GitHub Pages 에 배포한다.
+# 이 저장소에는 이 파일만 둔다. 사진과 invitation.conf 는 wedding-src 에만 있다.
+# 수정을 반영하려면 wedding-src 에 push 한 뒤 Actions 탭에서 Run workflow 를 누른다.
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          repository: Parking9/wedding-src
+          ssh-key: ${{ secrets.SRC_DEPLOY_KEY }}
+
+      - run: ./build.sh
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: dist
+          retention-days: 1
+
+      - id: deployment
+        uses: actions/deploy-pages@v5
